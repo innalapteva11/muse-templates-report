@@ -1,0 +1,1604 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Анализ популярности шаблонов Muse</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #1f2937; background: #fff; line-height: 1.5; }
+
+  .cover { background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #ec4899 100%);
+            color: white; padding: 60px 48px; min-height: 220px; }
+  .cover h1 { font-size: 36px; font-weight: 800; margin-bottom: 8px; }
+  .cover .subtitle { font-size: 16px; opacity: 0.85; }
+  .cover .meta { margin-top: 24px; font-size: 13px; opacity: 0.7; }
+
+  .toc { background: #f8fafc; border-left: 4px solid #6366f1; margin: 32px 48px; padding: 20px 24px; border-radius: 0 8px 8px 0; }
+  .toc h4 { color: #6366f1; margin-bottom: 12px; font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .toc ol { padding-left: 20px; color: #4b5563; font-size: 14px; line-height: 2; }
+
+  .disclaimer { background: #fef3c7; border: 1px solid #fde68a; border-radius: 10px;
+                 margin: 0 48px 32px; padding: 18px 22px; }
+  .disclaimer h4 { color: #92400e; font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+  .disclaimer p { color: #78350f; font-size: 13px; line-height: 1.7; }
+
+  .chapter { background: linear-gradient(90deg, #6366f1, #8b5cf6); color: white;
+              margin: 40px 0 0; padding: 20px 48px; }
+  .chapter h2 { font-size: 22px; font-weight: 700; }
+  .chapter .chapter-sub { font-size: 13px; opacity: 0.8; margin-top: 4px; }
+
+  .stats-row { display: flex; gap: 16px; margin: 24px 48px; }
+  .stat-box { flex: 1; background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 20px; text-align: center; }
+  .stat-box .stat-val { font-size: 28px; font-weight: 800; color: #6366f1; }
+  .stat-box .stat-label { font-size: 12px; color: #6b7280; margin-top: 4px; }
+
+  .section { margin: 24px 48px 32px; }
+  .section h3 { font-size: 17px; font-weight: 700; color: #374151; margin-bottom: 6px;
+                 padding-bottom: 8px; border-bottom: 2px solid #e5e7eb; }
+  .section-sub { font-size: 13px; color: #6b7280; margin: 6px 0 14px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th { background: #f9fafb; color: #374151; font-weight: 600; padding: 10px 12px;
+              text-align: left; border-bottom: 2px solid #e5e7eb; font-size: 12px; }
+  tbody tr { border-bottom: 1px solid #f3f4f6; }
+  tbody tr:hover { background: #fafafa; }
+  tbody td { padding: 8px 12px; vertical-align: middle; }
+
+  .cards-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+  .card { display: flex; gap: 12px; background: #f9fafb; border: 1px solid #e5e7eb;
+           border-radius: 10px; padding: 12px; width: calc(50% - 6px); min-width: 260px; }
+  .card-img { flex-shrink: 0; }
+  .card-body { flex: 1; min-width: 0; }
+  .card-id { font-size: 13px; font-weight: 700; color: #1f2937; margin-bottom: 4px; }
+  .card-metrics { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 5px; }
+  .metric { font-size: 12px; color: #6b7280; }
+  .metric.cr { font-weight: 700; color: #059669; }
+  .card-ranks { margin-top: 6px; font-size: 11px; color: #9ca3af; display: flex; gap: 10px; flex-wrap: wrap; }
+  .no-img { width:85px;height:85px;background:#e5e7eb;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#9ca3af;text-align:center; }
+
+  .stars-box { background: linear-gradient(135deg, #fef9c3, #fef3c7); border: 2px solid #fde68a;
+                border-radius: 12px; padding: 20px 24px; margin: 24px 48px; }
+  .stars-box h3 { color: #92400e; font-size: 16px; margin-bottom: 4px; }
+  .stars-box p { color: #78350f; font-size: 13px; margin-bottom: 14px; }
+
+  .footnote { margin: 40px 48px 60px; padding: 20px; background: #f8fafc;
+               border-radius: 10px; font-size: 12px; color: #6b7280; border: 1px solid #e5e7eb; }
+  .footnote strong { color: #374151; }
+
+  /* Lightbox */
+  .lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:9999;
+               align-items:center; justify-content:center; cursor:zoom-out; }
+  .lightbox.active { display:flex; }
+  .lightbox img { max-width:90vw; max-height:90vh; border-radius:12px; box-shadow:0 20px 60px rgba(0,0,0,0.5);
+                   object-fit:contain; animation:lb-in .15s ease; }
+  .lightbox-close { position:fixed; top:20px; right:24px; color:#fff; font-size:32px; cursor:pointer;
+                     line-height:1; opacity:0.8; }
+  .lightbox-close:hover { opacity:1; }
+  @keyframes lb-in { from { transform:scale(0.88); opacity:0; } to { transform:scale(1); opacity:1; } }
+
+  @media print {
+    .cover { min-height: auto; }
+    .chapter { break-before: page; }
+    .card { break-inside: avoid; }
+    tbody tr { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- LIGHTBOX -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <span class="lightbox-close" onclick="closeLightbox()">✕</span>
+  <img id="lightbox-img" src="" alt="">
+</div>
+<script>
+function openLightbox(src) {
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('active');
+}
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('active');
+  document.getElementById('lightbox-img').src = '';
+}
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeLightbox();
+});
+</script>
+
+<!-- COVER -->
+<div class="cover">
+  <h1>📊 Анализ шаблонов Muse</h1>
+  <div class="subtitle">Популярность · Конверсия · Рейтинги — видео и карусельные шаблоны</div>
+  <div class="meta">Июль 2026 · Bigrowth LTD · данные за последние 90 дней</div>
+</div>
+
+<!-- TOC -->
+<div class="toc">
+  <h4>Содержание</h4>
+  <ol>
+    <li>Оговорка об ограничениях данных</li>
+    <li>Видео-шаблоны — общий обзор</li>
+    <li>Видео: топ по популярности (открытиям)</li>
+    <li>Видео: топ по конверсии в экспорт</li>
+    <li>Видео: «звёзды» — хороши по обоим метрикам</li>
+    <li>Видео: анализ по сегментам (Premium / Free)</li>
+    <li>Карусельные шаблоны — общий обзор</li>
+    <li>Карусели: топ по популярности (открытиям)</li>
+    <li>Карусели: топ по конверсии в экспорт</li>
+    <li>Карусели: «звёзды» — хороши по обоим метрикам</li>
+    <li>Карусели: анализ по сегментам (Premium / Free)</li>
+  </ol>
+</div>
+
+<!-- DISCLAIMER -->
+<div class="disclaimer">
+  <h4>⚠️ Важная оговорка: ограничения метрик</h4>
+  <p>
+    <b>Популярность ≠ качество шаблона.</b> Количество открытий и экспортов сильно зависит от
+    <b>позиции шаблона на главном экране</b> (чем выше — тем больше трафика) и от
+    <b>давности публикации</b> (новые шаблоны набирают меньше, даже если они лучше).<br><br>
+    <b>CR тоже не абсолютная метрика.</b> Шаблон с CR 60% и 100 открытиями нельзя напрямую сравнивать
+    с шаблоном 30% CR и 20 000 открытиями — объём выборки принципиально разный, и меньшая выборка даёт
+    нестабильные значения. <b>Premium-шаблоны имеют системно более низкий CR</b> по сравнению с
+    бесплатными — это норма, а не дефект.<br><br>
+    В отчёте используется <b>составной score = CR × ln(открытий)</b>, который балансирует обе метрики,
+    но и он не учитывает позиционирование. Все рейтинги следует читать как ориентиры, а не абсолют.
+  </p>
+</div>
+
+<!-- =================== VIDEO =================== -->
+<div class="chapter">
+  <h2>🎬 Видео-шаблоны</h2>
+  <div class="chapter-sub">Топ-50 по количеству открытий за последние 90 дней</div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="stat-val">50</div><div class="stat-label">шаблонов в анализе</div></div>
+  <div class="stat-box"><div class="stat-val">44</div><div class="stat-label">Premium</div></div>
+  <div class="stat-box"><div class="stat-val">6</div><div class="stat-label">Free</div></div>
+  <div class="stat-box"><div class="stat-val">302 944</div><div class="stat-label">открытий всего</div></div>
+  <div class="stat-box"><div class="stat-val">105 192</div><div class="stat-label">экспортов всего</div></div>
+  <div class="stat-box"><div class="stat-val">34.7%</div><div class="stat-label">средний CR</div></div>
+</div>
+
+
+    <div class="section">
+      <h3>🔥 Топ-15 видео по популярности (открытиям)</h3><div class="section-sub">Шаблоны, которые открывали чаще всего. Помните: позиция на главном экране напрямую влияет на этот показатель.</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/eoEkLeCLAokPOzLh.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#796</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">23 409</td>
+          <td style="text-align:right">8 443</td>
+          <td style="text-align:right">36.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:60%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#24</td>
+          <td style="text-align:center">#1</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/FornhuHjqRicyJXK.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#846</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">23 388</td>
+          <td style="text-align:right">6 845</td>
+          <td style="text-align:right">29.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:49%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#41</td>
+          <td style="text-align:center">#2</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/lnHKoDLZBYkOLbyb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#817</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">20 099</td>
+          <td style="text-align:right">7 089</td>
+          <td style="text-align:right">35.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:59%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#26</td>
+          <td style="text-align:center">#3</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/wAUlUOCfEIKwhQgE.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#627</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">15 302</td>
+          <td style="text-align:right">5 045</td>
+          <td style="text-align:right">33.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:55%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#28</td>
+          <td style="text-align:center">#4</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/tKMOkFaxIaPaNbQD.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#836</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">15 019</td>
+          <td style="text-align:right">4 714</td>
+          <td style="text-align:right">31.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:52%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#33</td>
+          <td style="text-align:center">#5</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/CSflCNtdDohJYKzp.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#786</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">11 498</td>
+          <td style="text-align:right">3 615</td>
+          <td style="text-align:right">31.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:52%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#34</td>
+          <td style="text-align:center">#6</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/GvEnScjtyqrDySWv.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#835</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">10 265</td>
+          <td style="text-align:right">3 736</td>
+          <td style="text-align:right">36.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:61%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#20</td>
+          <td style="text-align:center">#7</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/zwTUkVJSFBfyllUJ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#853</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">9 969</td>
+          <td style="text-align:right">2 143</td>
+          <td style="text-align:right">21.5% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:36%;height:100%;background:#ef4444;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#50</td>
+          <td style="text-align:center">#8</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/ABVdHRKfPlJJCdru.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#803</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">9 625</td>
+          <td style="text-align:right">3 953</td>
+          <td style="text-align:right">41.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:68%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#14</td>
+          <td style="text-align:center">#9</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/aWZbfgpzjPQdXoKz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#858</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">8 565</td>
+          <td style="text-align:right">2 197</td>
+          <td style="text-align:right">25.7% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:43%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#45</td>
+          <td style="text-align:center">#10</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">11</td>
+          <td><img src="https://templates.bigrowth.io/templates/erXpoQWJeUQZUUrv.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#805</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">8 382</td>
+          <td style="text-align:right">3 163</td>
+          <td style="text-align:right">37.7% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:63%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#18</td>
+          <td style="text-align:center">#11</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">12</td>
+          <td><img src="https://templates.bigrowth.io/templates/ydMIpfAGXMJdHIMP.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#847</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">7 496</td>
+          <td style="text-align:right">2 354</td>
+          <td style="text-align:right">31.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:52%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#35</td>
+          <td style="text-align:center">#12</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">13</td>
+          <td><img src="https://templates.bigrowth.io/templates/YBffaXLuMhgeaWlb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#848</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">7 429</td>
+          <td style="text-align:right">2 183</td>
+          <td style="text-align:right">29.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:49%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#39</td>
+          <td style="text-align:center">#13</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">14</td>
+          <td><img src="https://templates.bigrowth.io/templates/EyfOUDswDmCcKhDj.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#800</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">7 019</td>
+          <td style="text-align:right">2 106</td>
+          <td style="text-align:right">30.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:50%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#38</td>
+          <td style="text-align:center">#14</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">15</td>
+          <td><img src="https://templates.bigrowth.io/templates/oHdhXXmaLjSWcahh.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#831</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">6 891</td>
+          <td style="text-align:right">2 264</td>
+          <td style="text-align:right">32.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:55%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#29</td>
+          <td style="text-align:center">#15</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+
+    <div class="section">
+      <h3>🎯 Топ-15 видео по конверсии (CR открытие→экспорт)</h3><div class="section-sub">Шаблоны с наилучшим соотношением «открыли → экспортировали». Строки выделены жёлтым, если шаблон одновременно входит в топ-15 по открытиям.</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/miZpeIVwxbXMSKgM.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#791</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">3 131</td>
+          <td style="text-align:right">2 166</td>
+          <td style="text-align:right">69.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:100%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#1</td>
+          <td style="text-align:center">#35</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/eKbMVBULdAUtEMdG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#659</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 926</td>
+          <td style="text-align:right">1 248</td>
+          <td style="text-align:right">64.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:100%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#2</td>
+          <td style="text-align:center">#46</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/vzHblrsDqMYSIHgd.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#736</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 345</td>
+          <td style="text-align:right">1 381</td>
+          <td style="text-align:right">58.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:98%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#3</td>
+          <td style="text-align:center">#42</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/QIsuMvXdMvwTNrXG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#569</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 911</td>
+          <td style="text-align:right">1 116</td>
+          <td style="text-align:right">58.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:97%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#4</td>
+          <td style="text-align:center">#47</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/bprvw-429.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#429</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">4 136</td>
+          <td style="text-align:right">2 333</td>
+          <td style="text-align:right">56.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:94%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#5</td>
+          <td style="text-align:center">#26</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/AFeoobgTcgkaMktJ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#811</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">2 428</td>
+          <td style="text-align:right">1 291</td>
+          <td style="text-align:right">53.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:89%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#6</td>
+          <td style="text-align:center">#39</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/AMljfFdxljEMgtPP.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#583</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">3 369</td>
+          <td style="text-align:right">1 637</td>
+          <td style="text-align:right">48.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:81%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#7</td>
+          <td style="text-align:center">#29</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/gVPYkCBrbRdurlED.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#661</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">2 374</td>
+          <td style="text-align:right">1 142</td>
+          <td style="text-align:right">48.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:80%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#8</td>
+          <td style="text-align:center">#40</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/rXqBfNtWKSpOeVnQ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#699</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">4 355</td>
+          <td style="text-align:right">1 999</td>
+          <td style="text-align:right">45.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:76%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#9</td>
+          <td style="text-align:center">#23</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/tDXIQKOBlQfIFeBQ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#770</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">4 094</td>
+          <td style="text-align:right">1 849</td>
+          <td style="text-align:right">45.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:75%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#10</td>
+          <td style="text-align:center">#27</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">11</td>
+          <td><img src="https://templates.bigrowth.io/templates/lhuSmFegxrQDLZCe.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#708</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">2 560</td>
+          <td style="text-align:right">1 105</td>
+          <td style="text-align:right">43.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:72%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#11</td>
+          <td style="text-align:center">#38</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">12</td>
+          <td><img src="https://templates.bigrowth.io/templates/srLGsTebMLRlHAAN.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#802</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">3 198</td>
+          <td style="text-align:right">1 372</td>
+          <td style="text-align:right">42.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:72%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#12</td>
+          <td style="text-align:center">#32</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">13</td>
+          <td><img src="https://templates.bigrowth.io/templates/SCpIyLhzGkFjrZYb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#826</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">3 759</td>
+          <td style="text-align:right">1 558</td>
+          <td style="text-align:right">41.5% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:69%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#13</td>
+          <td style="text-align:center">#28</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">14</td>
+          <td><img src="https://templates.bigrowth.io/templates/ABVdHRKfPlJJCdru.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#803</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">9 625</td>
+          <td style="text-align:right">3 953</td>
+          <td style="text-align:right">41.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:68%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#14</td>
+          <td style="text-align:center">#9</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">15</td>
+          <td><img src="https://templates.bigrowth.io/templates/ufNicLjCCYZbSHjZ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#785</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 881</td>
+          <td style="text-align:right">768</td>
+          <td style="text-align:right">40.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:68%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#15</td>
+          <td style="text-align:center">#49</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+<div class="stars-box">
+  <h3>⭐ «Звёзды» — видео, которые хороши везде (1 шт.)</h3>
+  <p>Эти шаблоны входят одновременно в топ-15 по открытиям <b>и</b> в топ-15 по CR.
+     Они популярны у пользователей и хорошо конвертируют — кандидаты на продвижение.</p>
+  <div class="cards-grid">
+    
+    <div class="card">
+      <div class="card-img"><img src="https://templates.bigrowth.io/templates/ABVdHRKfPlJJCdru.jpg" class="zoomable" style="width:85px;height:85px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></div>
+      <div class="card-body">
+        <div class="card-id">#803 <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></div>
+        <div class="card-metrics">
+          <span class="metric">👁 9 625</span>
+          <span class="metric">📤 3 953</span>
+          <span class="metric cr">CR 41.1%</span>
+        </div>
+        <div style="margin-top:4px"><div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:59%;height:100%;background:#22c55e;border-radius:4px"></div></div></div>
+        <div class="card-ranks">
+          <span>📊 по открытиям: #9</span>
+          <span>🎯 по CR: #14</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="section"><h3>📂 Видео по сегментам: Premium vs Free</h3></div>
+
+
+    <div class="section">
+      <h3>👑 Premium видео — топ-10 по открытиям (44 шаблонов)</h3><div class="section-sub">Средний CR Premium-видео: 34.3% (системно ниже Free — это норма)</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/eoEkLeCLAokPOzLh.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#796</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">23 409</td>
+          <td style="text-align:right">8 443</td>
+          <td style="text-align:right">36.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:60%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#24</td>
+          <td style="text-align:center">#1</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/FornhuHjqRicyJXK.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#846</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">23 388</td>
+          <td style="text-align:right">6 845</td>
+          <td style="text-align:right">29.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:49%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#41</td>
+          <td style="text-align:center">#2</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/lnHKoDLZBYkOLbyb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#817</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">20 099</td>
+          <td style="text-align:right">7 089</td>
+          <td style="text-align:right">35.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:59%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#26</td>
+          <td style="text-align:center">#3</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/wAUlUOCfEIKwhQgE.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#627</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">15 302</td>
+          <td style="text-align:right">5 045</td>
+          <td style="text-align:right">33.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:55%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#28</td>
+          <td style="text-align:center">#4</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/tKMOkFaxIaPaNbQD.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#836</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">15 019</td>
+          <td style="text-align:right">4 714</td>
+          <td style="text-align:right">31.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:52%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#33</td>
+          <td style="text-align:center">#5</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/CSflCNtdDohJYKzp.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#786</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">11 498</td>
+          <td style="text-align:right">3 615</td>
+          <td style="text-align:right">31.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:52%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#34</td>
+          <td style="text-align:center">#6</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/GvEnScjtyqrDySWv.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#835</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">10 265</td>
+          <td style="text-align:right">3 736</td>
+          <td style="text-align:right">36.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:61%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#20</td>
+          <td style="text-align:center">#7</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/zwTUkVJSFBfyllUJ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#853</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">9 969</td>
+          <td style="text-align:right">2 143</td>
+          <td style="text-align:right">21.5% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:36%;height:100%;background:#ef4444;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#50</td>
+          <td style="text-align:center">#8</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/ABVdHRKfPlJJCdru.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#803</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">9 625</td>
+          <td style="text-align:right">3 953</td>
+          <td style="text-align:right">41.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:68%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#14</td>
+          <td style="text-align:center">#9</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/aWZbfgpzjPQdXoKz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#858</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">8 565</td>
+          <td style="text-align:right">2 197</td>
+          <td style="text-align:right">25.7% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:43%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#45</td>
+          <td style="text-align:center">#10</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+
+    <div class="section">
+      <h3>👑 Premium видео — топ-10 по CR</h3>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/AFeoobgTcgkaMktJ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#811</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">2 428</td>
+          <td style="text-align:right">1 291</td>
+          <td style="text-align:right">53.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:89%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#6</td>
+          <td style="text-align:center">#39</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/AMljfFdxljEMgtPP.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#583</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">3 369</td>
+          <td style="text-align:right">1 637</td>
+          <td style="text-align:right">48.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:81%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#7</td>
+          <td style="text-align:center">#29</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/gVPYkCBrbRdurlED.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#661</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">2 374</td>
+          <td style="text-align:right">1 142</td>
+          <td style="text-align:right">48.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:80%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#8</td>
+          <td style="text-align:center">#40</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/tDXIQKOBlQfIFeBQ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#770</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">4 094</td>
+          <td style="text-align:right">1 849</td>
+          <td style="text-align:right">45.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:75%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#10</td>
+          <td style="text-align:center">#27</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/lhuSmFegxrQDLZCe.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#708</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">2 560</td>
+          <td style="text-align:right">1 105</td>
+          <td style="text-align:right">43.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:72%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#11</td>
+          <td style="text-align:center">#38</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/srLGsTebMLRlHAAN.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#802</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">3 198</td>
+          <td style="text-align:right">1 372</td>
+          <td style="text-align:right">42.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:72%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#12</td>
+          <td style="text-align:center">#32</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/SCpIyLhzGkFjrZYb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#826</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">3 759</td>
+          <td style="text-align:right">1 558</td>
+          <td style="text-align:right">41.5% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:69%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#13</td>
+          <td style="text-align:center">#28</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/ABVdHRKfPlJJCdru.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#803</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">9 625</td>
+          <td style="text-align:right">3 953</td>
+          <td style="text-align:right">41.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:68%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#14</td>
+          <td style="text-align:center">#9</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/ufNicLjCCYZbSHjZ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#785</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 881</td>
+          <td style="text-align:right">768</td>
+          <td style="text-align:right">40.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:68%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#15</td>
+          <td style="text-align:center">#49</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/EHuXRaymayloxGCa.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#833</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 887</td>
+          <td style="text-align:right">726</td>
+          <td style="text-align:right">38.5% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:64%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#16</td>
+          <td style="text-align:center">#48</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+
+    <div class="section">
+      <h3>✅ Free видео — топ-10 по открытиям (6 шаблонов)</h3><div class="section-sub">Средний CR Free-видео: 58.9%</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/rXqBfNtWKSpOeVnQ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#699</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">4 355</td>
+          <td style="text-align:right">1 999</td>
+          <td style="text-align:right">45.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:76%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#9</td>
+          <td style="text-align:center">#23</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/bprvw-429.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#429</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">4 136</td>
+          <td style="text-align:right">2 333</td>
+          <td style="text-align:right">56.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:94%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#5</td>
+          <td style="text-align:center">#26</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/miZpeIVwxbXMSKgM.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#791</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">3 131</td>
+          <td style="text-align:right">2 166</td>
+          <td style="text-align:right">69.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:100%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#1</td>
+          <td style="text-align:center">#35</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/vzHblrsDqMYSIHgd.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#736</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 345</td>
+          <td style="text-align:right">1 381</td>
+          <td style="text-align:right">58.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:98%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#3</td>
+          <td style="text-align:center">#42</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/eKbMVBULdAUtEMdG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#659</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 926</td>
+          <td style="text-align:right">1 248</td>
+          <td style="text-align:right">64.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:100%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#2</td>
+          <td style="text-align:center">#46</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/QIsuMvXdMvwTNrXG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#569</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 911</td>
+          <td style="text-align:right">1 116</td>
+          <td style="text-align:right">58.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:97%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#4</td>
+          <td style="text-align:center">#47</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+
+    <div class="section">
+      <h3>✅ Free видео — топ-10 по CR</h3>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/miZpeIVwxbXMSKgM.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#791</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">3 131</td>
+          <td style="text-align:right">2 166</td>
+          <td style="text-align:right">69.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:100%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#1</td>
+          <td style="text-align:center">#35</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/eKbMVBULdAUtEMdG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#659</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 926</td>
+          <td style="text-align:right">1 248</td>
+          <td style="text-align:right">64.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:100%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#2</td>
+          <td style="text-align:center">#46</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/vzHblrsDqMYSIHgd.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#736</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 345</td>
+          <td style="text-align:right">1 381</td>
+          <td style="text-align:right">58.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:98%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#3</td>
+          <td style="text-align:center">#42</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/QIsuMvXdMvwTNrXG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#569</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 911</td>
+          <td style="text-align:right">1 116</td>
+          <td style="text-align:right">58.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:97%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#4</td>
+          <td style="text-align:center">#47</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/bprvw-429.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#429</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">4 136</td>
+          <td style="text-align:right">2 333</td>
+          <td style="text-align:right">56.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:94%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#5</td>
+          <td style="text-align:center">#26</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/rXqBfNtWKSpOeVnQ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#699</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">4 355</td>
+          <td style="text-align:right">1 999</td>
+          <td style="text-align:right">45.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:76%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#9</td>
+          <td style="text-align:center">#23</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+<!-- =================== PHOTO =================== -->
+<div class="chapter">
+  <h2>🖼 Карусельные шаблоны</h2>
+  <div class="chapter-sub">Топ-50 по составному score (CR × ln(открытий)), мин. 100 открытий</div>
+</div>
+
+<div class="stats-row">
+  <div class="stat-box"><div class="stat-val">50</div><div class="stat-label">шаблонов в анализе</div></div>
+  <div class="stat-box"><div class="stat-val">30</div><div class="stat-label">Premium</div></div>
+  <div class="stat-box"><div class="stat-val">20</div><div class="stat-label">Free</div></div>
+  <div class="stat-box"><div class="stat-val">57 348</div><div class="stat-label">открытий всего</div></div>
+  <div class="stat-box"><div class="stat-val">20 748</div><div class="stat-label">экспортов всего</div></div>
+  <div class="stat-box"><div class="stat-val">36.2%</div><div class="stat-label">средний CR</div></div>
+</div>
+
+
+    <div class="section">
+      <h3>🔥 Топ-15 каруселей по популярности (открытиям)</h3><div class="section-sub">Открытий у каруселей в целом меньше, чем у видео — аудитория каруселей уже.</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/hyfNEYwgttDcVfJb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#69</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">14 381</td>
+          <td style="text-align:right">4 394</td>
+          <td style="text-align:right">30.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:51%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#44</td>
+          <td style="text-align:center">#13</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/DeNARpgpWnBvapzr.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#22</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">7 633</td>
+          <td style="text-align:right">3 207</td>
+          <td style="text-align:right">42.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:70%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#21</td>
+          <td style="text-align:center">#2</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/KnFjrNqICiqQTFYq.png" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#39</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">4 541</td>
+          <td style="text-align:right">1 081</td>
+          <td style="text-align:right">23.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:40%;height:100%;background:#ef4444;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#50</td>
+          <td style="text-align:center">#46</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/zssJqxGkUZWyEUfG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#102</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 527</td>
+          <td style="text-align:right">966</td>
+          <td style="text-align:right">38.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:64%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#27</td>
+          <td style="text-align:center">#9</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/uEFjbnnjLMpohQvX.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#29</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 183</td>
+          <td style="text-align:right">979</td>
+          <td style="text-align:right">44.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:75%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#17</td>
+          <td style="text-align:center">#4</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/fUHFqMuOrGAByZJz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#37</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 029</td>
+          <td style="text-align:right">748</td>
+          <td style="text-align:right">36.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:62%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#30</td>
+          <td style="text-align:center">#15</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/lkFAPeLCVwMfJzIw.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#76</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 850</td>
+          <td style="text-align:right">476</td>
+          <td style="text-align:right">25.7% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:43%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#49</td>
+          <td style="text-align:center">#50</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/rXxuRCpEOuyALabO.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#60</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 526</td>
+          <td style="text-align:right">506</td>
+          <td style="text-align:right">33.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:55%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#40</td>
+          <td style="text-align:center">#25</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/jnRbGMFQobzEfqlo.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#7</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 141</td>
+          <td style="text-align:right">675</td>
+          <td style="text-align:right">59.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:99%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#1</td>
+          <td style="text-align:center">#1</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/bTCsTFNkNSnvVCqf.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#24</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 091</td>
+          <td style="text-align:right">574</td>
+          <td style="text-align:right">52.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:88%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#6</td>
+          <td style="text-align:center">#3</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">11</td>
+          <td><img src="https://templates.bigrowth.io/templates/zWtBshLBUrRIuZRF.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#62</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 015</td>
+          <td style="text-align:right">307</td>
+          <td style="text-align:right">30.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:50%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#47</td>
+          <td style="text-align:center">#35</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">12</td>
+          <td><img src="https://templates.bigrowth.io/templates/IujFTAZRRKOknjDl.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#95</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">959</td>
+          <td style="text-align:right">280</td>
+          <td style="text-align:right">29.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:49%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#48</td>
+          <td style="text-align:center">#45</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">13</td>
+          <td><img src="https://templates.bigrowth.io/templates/rdHzcFfPNtihsncF.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#30</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">950</td>
+          <td style="text-align:right">329</td>
+          <td style="text-align:right">34.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:58%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#36</td>
+          <td style="text-align:center">#28</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">14</td>
+          <td><img src="https://templates.bigrowth.io/templates/zBhtDhgrXabFwisy.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#1</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">883</td>
+          <td style="text-align:right">354</td>
+          <td style="text-align:right">40.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:67%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#25</td>
+          <td style="text-align:center">#19</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">15</td>
+          <td><img src="https://templates.bigrowth.io/templates/ZODypQdXabsPDzUn.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#55</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">849</td>
+          <td style="text-align:right">263</td>
+          <td style="text-align:right">31.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:52%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#43</td>
+          <td style="text-align:center">#36</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+
+    <div class="section">
+      <h3>🎯 Топ-15 каруселей по конверсии (CR)</h3><div class="section-sub">Карусельные шаблоны в целом имеют более высокий CR, чем видео — пользователи, открывающие карусель, более целевые.</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/jnRbGMFQobzEfqlo.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#7</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 141</td>
+          <td style="text-align:right">675</td>
+          <td style="text-align:right">59.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:99%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#1</td>
+          <td style="text-align:center">#1</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/gmIrWqKtbWkkderH.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#128</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">110</td>
+          <td style="text-align:right">64</td>
+          <td style="text-align:right">58.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:97%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#2</td>
+          <td style="text-align:center">#18</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/kwrqPVwTAgQnEZLG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#134</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">170</td>
+          <td style="text-align:right">98</td>
+          <td style="text-align:right">57.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:96%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#3</td>
+          <td style="text-align:center">#10</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/tCLcvcjOahXrUrCZ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#125</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">181</td>
+          <td style="text-align:right">100</td>
+          <td style="text-align:right">55.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:92%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#4</td>
+          <td style="text-align:center">#14</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/DpTJVukznyauLFzb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#19</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">323</td>
+          <td style="text-align:right">174</td>
+          <td style="text-align:right">53.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:90%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#5</td>
+          <td style="text-align:center">#6</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/bTCsTFNkNSnvVCqf.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#24</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 091</td>
+          <td style="text-align:right">574</td>
+          <td style="text-align:right">52.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:88%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#6</td>
+          <td style="text-align:center">#3</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/aDEkqTbAijPEUwNK.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#132</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">308</td>
+          <td style="text-align:right">159</td>
+          <td style="text-align:right">51.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:86%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#7</td>
+          <td style="text-align:center">#11</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/sgCAMOgnphBQXoXz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#153</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">106</td>
+          <td style="text-align:right">53</td>
+          <td style="text-align:right">50.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:83%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#8</td>
+          <td style="text-align:center">#29</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/meNVNqAblvkHPqFE.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#18</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">245</td>
+          <td style="text-align:right">121</td>
+          <td style="text-align:right">49.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:82%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#9</td>
+          <td style="text-align:center">#20</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/SwtfVZimHoWmfJej.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#56</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">453</td>
+          <td style="text-align:right">222</td>
+          <td style="text-align:right">49.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:82%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#10</td>
+          <td style="text-align:center">#8</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">11</td>
+          <td><img src="https://templates.bigrowth.io/templates/sgCAMOgnphBQXoXz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#105</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">831</td>
+          <td style="text-align:right">406</td>
+          <td style="text-align:right">48.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:82%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#11</td>
+          <td style="text-align:center">#5</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">12</td>
+          <td><img src="https://templates.bigrowth.io/templates/huCJCMpsXxwISQUB.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#27</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">437</td>
+          <td style="text-align:right">211</td>
+          <td style="text-align:right">48.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:80%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#12</td>
+          <td style="text-align:center">#12</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">13</td>
+          <td><img src="https://templates.bigrowth.io/templates/PMDzbPSwDNehNckr.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#87</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">219</td>
+          <td style="text-align:right">102</td>
+          <td style="text-align:right">46.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:78%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#13</td>
+          <td style="text-align:center">#24</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">14</td>
+          <td><img src="https://templates.bigrowth.io/templates/jUTrCAGdBHxdkpSs.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#88</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">341</td>
+          <td style="text-align:right">158</td>
+          <td style="text-align:right">46.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:77%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#14</td>
+          <td style="text-align:center">#21</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">15</td>
+          <td><img src="https://templates.bigrowth.io/templates/RuFLsoJKAOOkabdr.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#129</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">410</td>
+          <td style="text-align:right">188</td>
+          <td style="text-align:right">45.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:76%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#15</td>
+          <td style="text-align:center">#17</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+<div class="stars-box">
+  <h3>⭐ «Звёзды» — карусели, которые хороши везде (2 шт.)</h3>
+  <p>Входят одновременно в топ-15 по открытиям <b>и</b> в топ-15 по CR.</p>
+  <div class="cards-grid">
+    
+    <div class="card">
+      <div class="card-img"><img src="https://templates.bigrowth.io/templates/jnRbGMFQobzEfqlo.jpg" class="zoomable" style="width:85px;height:85px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></div>
+      <div class="card-body">
+        <div class="card-id">#7 <span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></div>
+        <div class="card-metrics">
+          <span class="metric">👁 1 141</span>
+          <span class="metric">📤 675</span>
+          <span class="metric cr">CR 59.2%</span>
+        </div>
+        <div style="margin-top:4px"><div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:85%;height:100%;background:#22c55e;border-radius:4px"></div></div></div>
+        <div class="card-ranks">
+          <span>📊 по открытиям: #1</span>
+          <span>🎯 по CR: #1</span>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-img"><img src="https://templates.bigrowth.io/templates/bTCsTFNkNSnvVCqf.jpg" class="zoomable" style="width:85px;height:85px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></div>
+      <div class="card-body">
+        <div class="card-id">#24 <span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></div>
+        <div class="card-metrics">
+          <span class="metric">👁 1 091</span>
+          <span class="metric">📤 574</span>
+          <span class="metric cr">CR 52.6%</span>
+        </div>
+        <div style="margin-top:4px"><div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:75%;height:100%;background:#22c55e;border-radius:4px"></div></div></div>
+        <div class="card-ranks">
+          <span>📊 по открытиям: #3</span>
+          <span>🎯 по CR: #6</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="section"><h3>📂 Карусели по сегментам: Premium vs Free</h3></div>
+
+
+    <div class="section">
+      <h3>👑 Premium карусели — топ-10 по открытиям (30 шаблонов)</h3><div class="section-sub">Средний CR Premium-каруселей: 36.6%</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/KnFjrNqICiqQTFYq.png" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#39</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">4 541</td>
+          <td style="text-align:right">1 081</td>
+          <td style="text-align:right">23.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:40%;height:100%;background:#ef4444;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#50</td>
+          <td style="text-align:center">#46</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/lkFAPeLCVwMfJzIw.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#76</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 850</td>
+          <td style="text-align:right">476</td>
+          <td style="text-align:right">25.7% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:43%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#49</td>
+          <td style="text-align:center">#50</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/rXxuRCpEOuyALabO.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#60</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 526</td>
+          <td style="text-align:right">506</td>
+          <td style="text-align:right">33.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:55%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#40</td>
+          <td style="text-align:center">#25</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/zWtBshLBUrRIuZRF.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#62</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">1 015</td>
+          <td style="text-align:right">307</td>
+          <td style="text-align:right">30.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:50%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#47</td>
+          <td style="text-align:center">#35</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/IujFTAZRRKOknjDl.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#95</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">959</td>
+          <td style="text-align:right">280</td>
+          <td style="text-align:right">29.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:49%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#48</td>
+          <td style="text-align:center">#45</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/rdHzcFfPNtihsncF.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#30</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">950</td>
+          <td style="text-align:right">329</td>
+          <td style="text-align:right">34.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:58%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#36</td>
+          <td style="text-align:center">#28</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/zBhtDhgrXabFwisy.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#1</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">883</td>
+          <td style="text-align:right">354</td>
+          <td style="text-align:right">40.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:67%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#25</td>
+          <td style="text-align:center">#19</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/ZODypQdXabsPDzUn.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#55</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">849</td>
+          <td style="text-align:right">263</td>
+          <td style="text-align:right">31.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:52%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#43</td>
+          <td style="text-align:center">#36</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/tDwwrdhgUNWHAvtq.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#12</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">819</td>
+          <td style="text-align:right">266</td>
+          <td style="text-align:right">32.5% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:54%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#42</td>
+          <td style="text-align:center">#31</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/JYZAobgKHoolxPlZ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#4</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">751</td>
+          <td style="text-align:right">285</td>
+          <td style="text-align:right">37.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:63%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#28</td>
+          <td style="text-align:center">#23</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+
+    <div class="section">
+      <h3>👑 Premium карусели — топ-10 по CR</h3>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/DpTJVukznyauLFzb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#19</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">323</td>
+          <td style="text-align:right">174</td>
+          <td style="text-align:right">53.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:90%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#5</td>
+          <td style="text-align:center">#6</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/meNVNqAblvkHPqFE.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#18</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">245</td>
+          <td style="text-align:right">121</td>
+          <td style="text-align:right">49.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:82%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#9</td>
+          <td style="text-align:center">#20</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/PMDzbPSwDNehNckr.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#87</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">219</td>
+          <td style="text-align:right">102</td>
+          <td style="text-align:right">46.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:78%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#13</td>
+          <td style="text-align:center">#24</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/jUTrCAGdBHxdkpSs.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#88</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">341</td>
+          <td style="text-align:right">158</td>
+          <td style="text-align:right">46.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:77%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#14</td>
+          <td style="text-align:center">#21</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/ZlhwshVWQfhhpxFe.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#2</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">539</td>
+          <td style="text-align:right">239</td>
+          <td style="text-align:right">44.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:74%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#19</td>
+          <td style="text-align:center">#16</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/DEPPcFNOauRUJOdP.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#26</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">255</td>
+          <td style="text-align:right">111</td>
+          <td style="text-align:right">43.5% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:72%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#20</td>
+          <td style="text-align:center">#26</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/ORSebJqYyzGivBlY.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#5</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">158</td>
+          <td style="text-align:right">65</td>
+          <td style="text-align:right">41.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:68%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#23</td>
+          <td style="text-align:center">#37</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/sLQSYVNhhzCAdCly.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#14</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">390</td>
+          <td style="text-align:right">157</td>
+          <td style="text-align:right">40.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:67%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#24</td>
+          <td style="text-align:center">#27</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/zBhtDhgrXabFwisy.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#1</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">883</td>
+          <td style="text-align:right">354</td>
+          <td style="text-align:right">40.1% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:67%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#25</td>
+          <td style="text-align:center">#19</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/dMiYCOOllTBLnbVE.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#49</b><br><span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">👑 Premium</span></td>
+          <td style="text-align:right">193</td>
+          <td style="text-align:right">76</td>
+          <td style="text-align:right">39.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:66%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#26</td>
+          <td style="text-align:center">#39</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+
+    <div class="section">
+      <h3>✅ Free карусели — топ-10 по открытиям (20 шаблонов)</h3><div class="section-sub">Средний CR Free-каруселей: 46.9%</div>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/hyfNEYwgttDcVfJb.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#69</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">14 381</td>
+          <td style="text-align:right">4 394</td>
+          <td style="text-align:right">30.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:51%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#44</td>
+          <td style="text-align:center">#13</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/DeNARpgpWnBvapzr.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#22</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">7 633</td>
+          <td style="text-align:right">3 207</td>
+          <td style="text-align:right">42.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:70%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#21</td>
+          <td style="text-align:center">#2</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/zssJqxGkUZWyEUfG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#102</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 527</td>
+          <td style="text-align:right">966</td>
+          <td style="text-align:right">38.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:64%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#27</td>
+          <td style="text-align:center">#9</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/uEFjbnnjLMpohQvX.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#29</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 183</td>
+          <td style="text-align:right">979</td>
+          <td style="text-align:right">44.8% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:75%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#17</td>
+          <td style="text-align:center">#4</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/fUHFqMuOrGAByZJz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#37</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">2 029</td>
+          <td style="text-align:right">748</td>
+          <td style="text-align:right">36.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:62%;height:100%;background:#f59e0b;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#30</td>
+          <td style="text-align:center">#15</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/jnRbGMFQobzEfqlo.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#7</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 141</td>
+          <td style="text-align:right">675</td>
+          <td style="text-align:right">59.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:99%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#1</td>
+          <td style="text-align:center">#1</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/bTCsTFNkNSnvVCqf.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#24</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 091</td>
+          <td style="text-align:right">574</td>
+          <td style="text-align:right">52.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:88%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#6</td>
+          <td style="text-align:center">#3</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/sgCAMOgnphBQXoXz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#105</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">831</td>
+          <td style="text-align:right">406</td>
+          <td style="text-align:right">48.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:82%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#11</td>
+          <td style="text-align:center">#5</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/BzwnHHMxYgHyvDiX.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#58</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">777</td>
+          <td style="text-align:right">353</td>
+          <td style="text-align:right">45.4% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:76%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#16</td>
+          <td style="text-align:center">#7</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/SwtfVZimHoWmfJej.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#56</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">453</td>
+          <td style="text-align:right">222</td>
+          <td style="text-align:right">49.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:82%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#10</td>
+          <td style="text-align:center">#8</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+
+    <div class="section">
+      <h3>✅ Free карусели — топ-10 по CR</h3>
+      <table>
+        <thead><tr>
+          <th>#</th><th>Превью</th><th>Шаблон</th>
+          <th>Открытий</th><th>Экспортов</th><th>CR</th>
+          <th>Ранг CR</th><th>Ранг по открытиям</th>
+        </tr></thead>
+        <tbody><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">1</td>
+          <td><img src="https://templates.bigrowth.io/templates/jnRbGMFQobzEfqlo.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#7</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 141</td>
+          <td style="text-align:right">675</td>
+          <td style="text-align:right">59.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:99%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#1</td>
+          <td style="text-align:center">#1</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">2</td>
+          <td><img src="https://templates.bigrowth.io/templates/gmIrWqKtbWkkderH.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#128</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">110</td>
+          <td style="text-align:right">64</td>
+          <td style="text-align:right">58.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:97%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#2</td>
+          <td style="text-align:center">#18</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">3</td>
+          <td><img src="https://templates.bigrowth.io/templates/kwrqPVwTAgQnEZLG.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#134</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">170</td>
+          <td style="text-align:right">98</td>
+          <td style="text-align:right">57.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:96%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#3</td>
+          <td style="text-align:center">#10</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">4</td>
+          <td><img src="https://templates.bigrowth.io/templates/tCLcvcjOahXrUrCZ.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#125</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">181</td>
+          <td style="text-align:right">100</td>
+          <td style="text-align:right">55.2% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:92%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#4</td>
+          <td style="text-align:center">#14</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">5</td>
+          <td><img src="https://templates.bigrowth.io/templates/bTCsTFNkNSnvVCqf.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#24</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">1 091</td>
+          <td style="text-align:right">574</td>
+          <td style="text-align:right">52.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:88%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#6</td>
+          <td style="text-align:center">#3</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">6</td>
+          <td><img src="https://templates.bigrowth.io/templates/aDEkqTbAijPEUwNK.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#132</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">308</td>
+          <td style="text-align:right">159</td>
+          <td style="text-align:right">51.6% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:86%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#7</td>
+          <td style="text-align:center">#11</td>
+        </tr><tr style="background:">
+          <td style="text-align:center;font-weight:700;color:#6b7280">7</td>
+          <td><img src="https://templates.bigrowth.io/templates/sgCAMOgnphBQXoXz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#153</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">106</td>
+          <td style="text-align:right">53</td>
+          <td style="text-align:right">50.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:83%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#8</td>
+          <td style="text-align:center">#29</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">8</td>
+          <td><img src="https://templates.bigrowth.io/templates/SwtfVZimHoWmfJej.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#56</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">453</td>
+          <td style="text-align:right">222</td>
+          <td style="text-align:right">49.0% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:82%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#10</td>
+          <td style="text-align:center">#8</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">9</td>
+          <td><img src="https://templates.bigrowth.io/templates/sgCAMOgnphBQXoXz.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#105</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">831</td>
+          <td style="text-align:right">406</td>
+          <td style="text-align:right">48.9% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:82%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#11</td>
+          <td style="text-align:center">#5</td>
+        </tr><tr style="background:#fef9c3">
+          <td style="text-align:center;font-weight:700;color:#6b7280">10</td>
+          <td><img src="https://templates.bigrowth.io/templates/huCJCMpsXxwISQUB.jpg" class="zoomable" style="width:60px;height:60px;object-fit:cover;border-radius:8px;cursor:zoom-in;" onerror="this.style.display='none'" onclick="openLightbox(this.src)"></td>
+          <td><b>#27</b><br><span style="background:#f0fdf4;color:#166534;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600">Free</span></td>
+          <td style="text-align:right">437</td>
+          <td style="text-align:right">211</td>
+          <td style="text-align:right">48.3% <div style="background:#e5e7eb;border-radius:4px;height:6px;width:80px;display:inline-block;vertical-align:middle"><div style="width:80%;height:100%;background:#22c55e;border-radius:4px"></div></div></td>
+          <td style="text-align:center">#12</td>
+          <td style="text-align:center">#12</td>
+        </tr></tbody>
+      </table>
+    </div>
+
+<!-- FOOTNOTE -->
+<div class="footnote">
+  <strong>Примечания к методологии:</strong><br>
+  • <b>Данные</b>: Amplitude, последние 90 дней, шаблоны с ≥100 открытиями (фото). Видео — топ-50 по открытиям.<br>
+  • <b>Score</b> = CR × ln(открытия + 1). Позволяет сравнивать шаблоны с разным объёмом трафика, но не учитывает позицию на экране.<br>
+  • <b>Шаблон #127</b> исключён из анализа каруселей (экстремальный CR при минимальной выборке, 107 открытий).<br>
+  • <b>Ограничения</b>: позиция на главном экране и дата публикации не учтены. Premium ↔ Free CR несопоставимы напрямую.<br>
+  • <b>Превью фото-шаблонов</b>: изображения загружаются с production-сервера и могут не отображаться без подключения к интернету.<br>
+  <br>
+  <em>Отчёт сгенерирован автоматически · Bigrowth LTD · Июль 2026</em>
+</div>
+
+</body>
+</html>
