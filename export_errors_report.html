@@ -187,6 +187,25 @@
     transition: width .4s ease;
   }
 
+  .expand-btn {
+    background: none; border: 1px solid var(--border); border-radius: 4px;
+    color: var(--muted); cursor: pointer; padding: 2px 7px; font-size: 12px;
+    line-height: 1.4; transition: border-color .15s, color .15s;
+  }
+  .expand-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .expand-btn.open  { border-color: var(--accent); color: var(--accent); }
+  .sparkrow td {
+    padding: 0 14px 14px;
+    background: rgba(59,130,246,.04);
+    border-bottom: 1px solid var(--border);
+  }
+  .sparkrow .spark-inner {
+    position: relative; height: 110px;
+  }
+  .sparkrow .spark-label {
+    font-size: 11px; color: var(--muted); margin-bottom: 6px;
+  }
+
   .trend-badge {
     display: inline-flex;
     align-items: center;
@@ -411,6 +430,7 @@
   <table>
     <thead>
       <tr>
+        <th></th>
         <th>Код</th>
         <th>Описание</th>
         <th class="right">Всего</th>
@@ -600,11 +620,16 @@
 
   // ── Build table ──
   const tbody = document.getElementById('errorTable');
-  ERRORS.forEach(e => {
+  const sparkCharts = {};
+
+  ERRORS.forEach((e, idx) => {
     const pct = (e.total / TOTAL_ERRORS * 100).toFixed(1);
     const barW = Math.round(e.total / MAX_TOTAL * 100);
+    const rowId = `spark-${idx}`;
+
     const tr = document.createElement('tr');
     tr.innerHTML = `
+      <td><button class="expand-btn" id="btn-${idx}" onclick="toggleSpark(${idx})">▾</button></td>
       <td class="td-code">${e.code}</td>
       <td class="td-name">${e.name}<small>${e.note}</small></td>
       <td class="td-num">${e.total.toLocaleString('ru')}</td>
@@ -617,7 +642,68 @@
       <td class="td-num dim">${e.h2.toLocaleString('ru')}</td>
     `;
     tbody.appendChild(tr);
+
+    // spark row (hidden)
+    const sparkTr = document.createElement('tr');
+    sparkTr.className = 'sparkrow';
+    sparkTr.id = rowId;
+    sparkTr.hidden = true;
+    sparkTr.innerHTML = `
+      <td colspan="9">
+        <div class="spark-label">% от всех экспортов · по неделям (90 дней)</div>
+        <div class="spark-inner"><canvas id="canvas-${idx}"></canvas></div>
+      </td>
+    `;
+    tbody.appendChild(sparkTr);
   });
+
+  function toggleSpark(idx) {
+    const row = document.getElementById(`spark-${idx}`);
+    const btn = document.getElementById(`btn-${idx}`);
+    const opening = row.hidden;
+    row.hidden = !opening;
+    btn.textContent = opening ? '▴' : '▾';
+    btn.classList.toggle('open', opening);
+
+    if (opening && !sparkCharts[idx]) {
+      const e = ERRORS[idx];
+      const rateData = e.weekly.map((v, i) => +(v / WEEKLY_EXPORTS[i] * 100).toFixed(3));
+      const ctx = document.getElementById(`canvas-${idx}`).getContext('2d');
+      sparkCharts[idx] = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: WEEKS,
+          datasets: [{
+            data: rateData,
+            borderColor: 'rgba(59,130,246,.85)',
+            backgroundColor: 'rgba(59,130,246,.10)',
+            borderWidth: 2,
+            pointRadius: 3,
+            pointHoverRadius: 5,
+            fill: true,
+            tension: 0.3,
+            segment: { borderDash: ctx => ctx.p1DataIndex === 13 ? [4,3] : undefined }
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#162030', borderColor: '#1E2D3D', borderWidth: 1,
+              titleColor: '#E8EDF2', bodyColor: '#7A90A4', padding: 8,
+              callbacks: { label: c => ` ${c.parsed.y.toFixed(3)}% от экспортов` }
+            }
+          },
+          scales: {
+            x: { ticks: { color: '#7A90A4', font: { size: 10 }, maxRotation: 45 }, grid: { color: 'rgba(255,255,255,.04)' } },
+            y: { ticks: { color: '#7A90A4', font: { size: 10 }, callback: v => v + '%' }, grid: { color: 'rgba(255,255,255,.04)' } }
+          }
+        }
+      });
+    }
+  }
 
   // ── Helper: rate line chart ──
   function makeRateChart(id, labels, data, label) {
