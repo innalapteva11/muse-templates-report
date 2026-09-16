@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Export Errors — Muse</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Inter:wght@400;500;600&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg:         #0F1923;
+    --surface:    #162030;
+    --border:     #1E2D3D;
+    --text:       #E8EDF2;
+    --muted:      #7A90A4;
+    --accent:     #3B82F6;
+    --up:         #F87171;
+    --down:       #34D399;
+    --stable:     #FBBF24;
+    --up-bg:      rgba(248,113,113,.12);
+    --down-bg:    rgba(52,211,153,.12);
+    --stable-bg:  rgba(251,191,36,.12);
+    --code-font:  'IBM Plex Mono', 'Courier New', monospace;
+    --body-font:  'Inter', system-ui, sans-serif;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--body-font);
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 20px 48px;
+    max-width: 960px;
+    margin: 0 auto;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* ── Header ── */
+  .report-header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .report-header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -.3px;
+    color: var(--text);
+    text-wrap: balance;
+  }
+  .report-header .meta {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .report-badge {
+    font-family: var(--code-font);
+    font-size: 11px;
+    background: var(--border);
+    color: var(--muted);
+    padding: 4px 10px;
+    border-radius: 4px;
+    white-space: nowrap;
+    align-self: flex-start;
+  }
+
+  /* ── KPI tiles ── */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .kpi {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-family: var(--code-font);
+    font-size: 26px;
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.1;
+  }
+  .kpi-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .kpi-value.up    { color: var(--up); }
+  .kpi-value.down  { color: var(--down); }
+  .kpi-value.warn  { color: var(--stable); }
+
+  /* ── Section titles ── */
+  .section-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* ── Error table ── */
+  .table-wrap {
+    overflow-x: auto;
+    margin-bottom: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: var(--muted);
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  th.right { text-align: right; }
+  td {
+    padding: 11px 14px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: middle;
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,.025); }
+
+  .td-code {
+    font-family: var(--code-font);
+    font-size: 12px;
+    color: var(--accent);
+    white-space: nowrap;
+  }
+  .td-name {
+    color: var(--text);
+    font-weight: 500;
+  }
+  .td-name small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .td-num {
+    font-family: var(--code-font);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    white-space: nowrap;
+  }
+  .td-num.dim { color: var(--muted); }
+
+  .bar-wrap {
+    width: 80px;
+    height: 6px;
+    background: var(--border);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--accent);
+    transition: width .4s ease;
+  }
+
+  .trend-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+  .trend-up    { background: var(--up-bg);     color: var(--up);     }
+  .trend-down  { background: var(--down-bg);   color: var(--down);   }
+  .trend-stable{ background: var(--stable-bg); color: var(--stable); }
+
+  /* ── Chart ── */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 32px;
+  }
+  .chart-card h3 {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+  .chart-card p {
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .chart-container { position: relative; height: 260px; }
+
+  /* ── Findings ── */
+  .findings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .finding {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 18px;
+  }
+  .finding-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: 8px;
+    font-weight: 600;
+  }
+  .finding-label.alert  { color: var(--up); }
+  .finding-label.good   { color: var(--down); }
+  .finding-label.info   { color: var(--accent); }
+  .finding-label.warn   { color: var(--stable); }
+  .finding p {
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.55;
+  }
+  .finding strong { color: var(--text); }
+
+  /* ── Footer ── */
+  .report-footer {
+    font-size: 11px;
+    color: var(--muted);
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── Header ── -->
+<header class="report-header">
+  <div>
+    <h1>Ошибки экспорта — Muse</h1>
+    <div class="meta">Muse (Video Templates) · Amplitude · 15 июня — 14 сентября 2026</div>
+  </div>
+  <div class="report-badge">Project ID 414068</div>
+</header>
+
+<!-- ── KPI tiles ── -->
+<div class="kpi-row">
+  <div class="kpi">
+    <div class="kpi-label">Всего ошибок (90 дней)</div>
+    <div class="kpi-value">20 462</div>
+    <div class="kpi-sub">из 1 384 887 экспортов</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Доля ошибок</div>
+    <div class="kpi-value warn">1.48%</div>
+    <div class="kpi-sub">~228 ошибок в день</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Топ ошибка</div>
+    <div class="kpi-value" style="font-size:16px;line-height:1.3">Нет места</div>
+    <div class="kpi-sub">Code 1 · 22.6% всех ошибок</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">Растёт быстрее всех</div>
+    <div class="kpi-value up" style="font-size:16px;line-height:1.3">Декод −11821</div>
+    <div class="kpi-sub">+27% за период</div>
+  </div>
+</div>
+
+<!-- ── Chart ── -->
+<div class="chart-card">
+  <h3>Недельная динамика по топ-5 кодам ошибок</h3>
+  <p>Частичная неделя Sep 14 показана пунктиром. Все локали объединены по коду.</p>
+  <div class="chart-container">
+    <canvas id="trendsChart"></canvas>
+  </div>
+</div>
+
+<!-- ── Table ── -->
+<div class="section-title">Все ошибки — ранжировано по объёму</div>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Код</th>
+        <th>Описание</th>
+        <th class="right">Всего</th>
+        <th class="right">% ошибок</th>
+        <th>Доля</th>
+        <th>Тренд (H1→H2)</th>
+        <th class="right">H1 (нед 1–7)</th>
+        <th class="right">H2 (нед 8–13)</th>
+      </tr>
+    </thead>
+    <tbody id="errorTable"></tbody>
+  </table>
+</div>
+
+<!-- ── Findings ── -->
+<div class="section-title">Ключевые выводы</div>
+<div class="findings-grid">
+  <div class="finding">
+    <div class="finding-label info">Контекст</div>
+    <p>43.7% всех ошибок — это <strong>Code 1 (нет места в Фото)</strong> и <strong>Code −11807 (диск заполнен)</strong>. Это проблема на стороне пользователя, а не баг в приложении. Варианты реакции: предупреждать пользователя до экспорта.</p>
+  </div>
+  <div class="finding">
+    <div class="finding-label alert">⚠ Растёт</div>
+    <p><strong>Code −11821 (не удаётся декодировать)</strong> вырос с 678 (H1) до 860 (H2) +27%. Связан с медиафайлами, которые приложение не может прочитать. Стоит проверить совместимость с новыми форматами (iOS 26).</p>
+  </div>
+  <div class="finding">
+    <div class="finding-label good">✓ Падает</div>
+    <p><strong>Code −11800</strong> упал с 830 (H1) до 123 (H2), −85%. Вероятно, был исправлен в одном из релизов. <strong>Code −11847</strong> (операция прервана) снизился вдвое — похожая картина.</p>
+  </div>
+  <div class="finding">
+    <div class="finding-label warn">Наблюдать</div>
+    <p><strong>Code −11841</strong> (Operation Stopped) показал всплеск на неделе Sep 7 (+42 события). Маленький объём, но аномальный скачок — стоит смотреть за следующими неделями.</p>
+  </div>
+</div>
+
+<!-- ── Footer ── -->
+<footer class="report-footer">
+  <span>Данные: Amplitude · Muse (Video Templates) · appId 414068</span>
+  <span>Сгенерировано: сентябрь 2026 · Bigrowth</span>
+</footer>
+
+<script>
+  // ─── data ───────────────────────────────────────────────────────────
+  const WEEKS = ["Jun 15","Jun 22","Jun 29","Jul 6","Jul 13","Jul 20","Jul 27",
+                 "Aug 3","Aug 10","Aug 17","Aug 24","Aug 31","Sep 7","Sep 14*"];
+
+  const ERRORS = [
+    {
+      code: "Code 1",
+      name: "Нет места в Фотогалерее",
+      note: "Insufficient disk space to Photos library",
+      total: 4620,
+      h1: 2327, h2: 2293,
+      weekly: [315,297,321,413,303,353,325,385,399,346,372,333,335,123]
+    },
+    {
+      code: "Code −11807",
+      name: "Диск заполнен",
+      note: "Disk Full",
+      total: 4311,
+      h1: 2129, h2: 2182,
+      weekly: [236,300,381,334,296,301,281,369,357,369,343,353,315,131]
+    },
+    {
+      code: "Code −11847",
+      name: "Операция прервана",
+      note: "Operation Interrupted",
+      total: 3353,
+      h1: 2326, h2: 1027,
+      weekly: [328,340,337,371,305,318,327,200,140,167,180,152,151,53]
+    },
+    {
+      code: "Code −11819",
+      name: "Нельзя завершить действие",
+      note: "Cannot Complete Action",
+      total: 2260,
+      h1: 1402, h2: 858,
+      weekly: [190,179,151,261,295,151,175,136,97,115,102,150,195,47]
+    },
+    {
+      code: "Code 1",
+      name: "Ошибка отмены (CancellationError)",
+      note: "Swift.CancellationError",
+      total: 2083,
+      h1: 1159, h2: 930,
+      weekly: [139,182,169,133,148,211,177,164,181,134,116,158,125,52]
+    },
+    {
+      code: "Code −11821",
+      name: "Не удаётся декодировать",
+      note: "Cannot Decode",
+      total: 1546,
+      h1: 678, h2: 860,
+      weekly: [141,80,92,147,82,74,62,177,94,162,85,154,139,49]
+    },
+    {
+      code: "Code −11800",
+      name: "Операция не выполнена",
+      note: "The operation could not be completed",
+      total: 943,
+      h1: 830, h2: 123,
+      weekly: [138,161,61,89,228,96,57,23,46,10,2,19,21,2]
+    },
+    {
+      code: "Code 3",
+      name: "Нулевая длительность / место",
+      note: "Resource zero duration / Disk space",
+      total: 733,
+      h1: 434, h2: 299,
+      weekly: [61,75,65,44,60,65,64,45,39,32,34,71,55,23]
+    },
+    {
+      code: "Code −3000",
+      name: "Не удаётся создать файл",
+      note: "Cannot create file",
+      total: 423,
+      h1: 245, h2: 191,
+      weekly: [37,29,28,29,35,49,38,37,35,27,39,28,22,3]
+    },
+    {
+      code: "Code −11841",
+      name: "Операция остановлена",
+      note: "Operation Stopped",
+      total: 162,
+      h1: 70, h2: 92,
+      weekly: [6,7,2,20,15,3,17,14,6,18,7,4,42,1]
+    },
+    {
+      code: "Code 4",
+      name: "Нет видеодорожек",
+      note: "No video tracks",
+      total: 28,
+      h1: 6, h2: 22,
+      weekly: [0,0,0,0,1,2,3,2,0,0,1,10,7,2]
+    },
+  ];
+
+  const TOTAL_ERRORS = ERRORS.reduce((s, e) => s + e.total, 0);
+  const MAX_TOTAL = ERRORS[0].total;
+
+  // trend
+  function trendClass(e) {
+    const pct = (e.h2 - e.h1) / e.h1 * 100;
+    if (pct > 10)  return 'up';
+    if (pct < -10) return 'down';
+    return 'stable';
+  }
+  function trendLabel(e) {
+    const pct = Math.round((e.h2 - e.h1) / e.h1 * 100);
+    if (pct > 10)  return `↑ +${pct}%`;
+    if (pct < -10) return `↓ ${pct}%`;
+    return `→ ${pct > 0 ? '+' : ''}${pct}%`;
+  }
+  function trendBadgeClass(e) {
+    const c = trendClass(e);
+    return c === 'up' ? 'trend-badge trend-up' : c === 'down' ? 'trend-badge trend-down' : 'trend-badge trend-stable';
+  }
+
+  // ── Build table ──
+  const tbody = document.getElementById('errorTable');
+  ERRORS.forEach(e => {
+    const pct = (e.total / TOTAL_ERRORS * 100).toFixed(1);
+    const barW = Math.round(e.total / MAX_TOTAL * 100);
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="td-code">${e.code}</td>
+      <td class="td-name">${e.name}<small>${e.note}</small></td>
+      <td class="td-num">${e.total.toLocaleString('ru')}</td>
+      <td class="td-num">${pct}%</td>
+      <td>
+        <div class="bar-wrap"><div class="bar-fill" style="width:${barW}%"></div></div>
+      </td>
+      <td><span class="${trendBadgeClass(e)}">${trendLabel(e)}</span></td>
+      <td class="td-num dim">${e.h1.toLocaleString('ru')}</td>
+      <td class="td-num dim">${e.h2.toLocaleString('ru')}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+
+  // ── Chart ──
+  const COLORS = [
+    'rgba(59,130,246,.85)',   // blue  — disk space
+    'rgba(251,191,36,.85)',   // amber — disk full
+    'rgba(168,85,247,.85)',   // purple — interrupted
+    'rgba(248,113,113,.85)',  // red — cannot decode (growing)
+    'rgba(52,211,153,.85)',   // green — op failed (declining)
+  ];
+  const TOP5 = [ERRORS[0], ERRORS[1], ERRORS[2], ERRORS[5], ERRORS[6]];
+
+  const ctx = document.getElementById('trendsChart').getContext('2d');
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: WEEKS,
+      datasets: TOP5.map((e, i) => ({
+        label: `${e.code} ${e.name}`,
+        data: e.weekly,
+        borderColor: COLORS[i],
+        backgroundColor: COLORS[i].replace('.85)', '.10)'),
+        borderWidth: 2,
+        pointRadius: 3,
+        pointHoverRadius: 5,
+        fill: false,
+        tension: 0.3,
+        segment: {
+          borderDash: ctx => ctx.p1DataIndex === 13 ? [4,3] : undefined
+        }
+      }))
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            color: '#7A90A4',
+            font: { size: 11, family: "'Inter', sans-serif" },
+            boxWidth: 12,
+            padding: 16
+          }
+        },
+        tooltip: {
+          backgroundColor: '#162030',
+          borderColor: '#1E2D3D',
+          borderWidth: 1,
+          titleColor: '#E8EDF2',
+          bodyColor: '#7A90A4',
+          padding: 10
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#7A90A4', font: { size: 11 }, maxRotation: 45 },
+          grid: { color: 'rgba(255,255,255,.04)' }
+        },
+        y: {
+          ticks: { color: '#7A90A4', font: { size: 11 } },
+          grid: { color: 'rgba(255,255,255,.04)' }
+        }
+      }
+    }
+  });
+</script>
+</body>
+</html>
